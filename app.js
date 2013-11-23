@@ -15,50 +15,72 @@ var express = require("express"),
     path = require("path"),
     orm = require('orm');
 
-var app = express.createServer();
+var app = express();
+
+
+app.use(orm.express('sqlite://storage.db', {
+    define: function (db, models, next) {
+        models.user = db.define("user", {
+            id: Number,
+            name: String
+        });
+
+        models.doubt = db.define("doubt", {
+            id: Number,
+            message: String,
+            user: Number,
+            question: Number
+        });
+
+        models.message = db.define("message", {
+            id: Number,
+            message: String,
+            user: Number,
+            question: Number
+        });
+
+        next();
+    }
+}));
+
 
 app.get('/question', function (req, res) {
-    res.send('Ecomm API is running');
+
+    req.models.doubt.find(function (err, questions) {
+
+        res.writeHead(200, {
+            'Content-Type': 'text/plain' });
+        res.write(JSON.stringify(questions));
+        res.end();
+
+        console.log("Questions found: %s", JSON.stringify(questions));
+
+    });
 });
 
-// Launch server
+app.get('/user', function (req, res) {
 
-app.listen(4242);
+    req.models.user.find(function (err, users) {
+
+        res.writeHead(200, {
+            'Content-Type': 'text/plain' });
+        res.write(JSON.stringify(users));
+        res.end();
+
+        console.log("Users found: %s", JSON.stringify(users));
+
+    });
+});
 
 
-//var
+//app.get(/^\/([a-zA-Z0-9_\.~-]+)\/(.*)/, function (req, res) {
+//    res.writeHead(404, { 'Content-Type': 'text/plain' });
+//    res.write("Nothing was found for [/mimi]");
+//    res.end();
 //
-//var app = express();
-//
-//orm.connect('sqlite://storage.db', function (err, db) {
-//    if (err) {
-//        console.log('ERROR: ' + err);
-//    }
-//
-//    var User = db.define("user", {
-//        id: Number,
-//        name: String
-//    });
-//
-//    User.create([
-//        {
-//            id: 3,
-//            name: "John"
-//        },
-//        {
-//            id: 2,
-//            name: "Liza"
-//        }
-//    ], function (err, items) {
-//        if (err) {
-//            console.log("ERRO: " + err);
-//        }
-//    });
-//
-//    User.get(2, function (err, user) {
-//
-//        console.log("Searching...");
-//        console.log("User found: %s", user.name);
-//
-//    });
+//    console.log("Not found");
 //});
+
+
+// Launch server
+app.listen(4242);
