@@ -17,6 +17,7 @@ var express = require("express"),
 
 var app = express();
 
+var myModels = new Array();
 
 app.use(orm.express('sqlite://storage.db', {
     define: function (db, models, next) {
@@ -25,7 +26,13 @@ app.use(orm.express('sqlite://storage.db', {
             name: String
         });
 
-        models.doubt = db.define("doubt", {
+        models.question = db.define("question", {
+            id: Number,
+            message: String,
+            user: Number
+        });
+
+        models.answer = db.define("answer", {
             id: Number,
             message: String,
             user: Number,
@@ -36,41 +43,115 @@ app.use(orm.express('sqlite://storage.db', {
             id: Number,
             message: String,
             user: Number,
-            question: Number
+            doubt: Number
         });
+
+        myModels['question'] = models.question;
+        myModels['user'] = models.user;
+        myModels['answer'] = models.answer;
+        myModels['message'] = models.message;
+
+        console.log("ModelName: " + JSON.stringify(models.question));
 
         next();
     }
 }));
 
+function printOnScreen(objects, res) {
+    res.writeHead(200, {'Content-Type': 'text/plain' });
+    if (objects) {
+        res.write(JSON.stringify(objects));
+    }
+    res.end();
+    console.log("Questions found: %s", JSON.stringify(objects));
+}
 
-app.get('/question', function (req, res) {
 
-    req.models.doubt.find(function (err, questions) {
-
-        res.writeHead(200, {
-            'Content-Type': 'text/plain' });
-        res.write(JSON.stringify(questions));
-        res.end();
-
-        console.log("Questions found: %s", JSON.stringify(questions));
-
+app.get('/:modelName', function (req, res) {
+    myModels[req.params.modelName].find(function (err, questions) {
+        printOnScreen(questions, res);
     });
+    console.log("ModelName: " + JSON.stringify(req.models.message));
 });
 
-app.get('/user', function (req, res) {
 
-    req.models.user.find(function (err, users) {
-
-        res.writeHead(200, {
-            'Content-Type': 'text/plain' });
-        res.write(JSON.stringify(users));
-        res.end();
-
-        console.log("Users found: %s", JSON.stringify(users));
-
-    });
-});
+//
+//app.get('/question', function (req, res) {
+//    req.models.question.find(function (err, questions) {
+//        printOnScreen(questions, res);
+//    });
+//});
+//
+//
+//app.get('/question/:id', function (req, res) {
+//    req.models.question.get(req.params.id, function (err, questions) {
+//        if (err) {
+//            console.log("ERROR: " + err);
+//        } else {
+//            printOnScreen(questions, res);
+//        }
+//    });
+//});
+//
+//app.get('/answer', function (req, res) {
+//    req.models.answer.find(function (err, answer) {
+//        printOnScreen(answer, res);
+//    });
+//});
+//
+//
+//app.get('/answer/:id', function (req, res) {
+//    req.models.answer.get(req.params.id, function (err, answer) {
+//        if (err) {
+//            console.log("ERROR: " + err);
+//        } else {
+//            printOnScreen(answer, res);
+//        }
+//    });
+//});
+//
+//
+//app.get('/user', function (req, res) {
+//    req.models.user.find(function (err, users) {
+//        printOnScreen(users, res);
+//    });
+//});
+//
+//app.get('/user/:id', function (req, res) {
+//    req.models.user.get(req.params.id, function (err, users) {
+//        printOnScreen(users, res);
+//    });
+//});
+//
+//
+//app.get('/user/:id/question', function (req, res) {
+//    req.models.question.find({user: req.params.id }, function (err, question) {
+//        printOnScreen(question, res);
+//    });
+//});
+//
+//app.get('/user/:id/answer', function (req, res) {
+//    req.models.answer.find({user: req.params.id}, function (err, answer) {
+//        printOnScreen(answer, res);
+//    });
+//});
+//
+//app.get('/message', function (req, res) {
+//    req.models.message.find(function (err, messages) {
+//        if (err) {
+//            console.log("ERROR: " + err);
+//        } else {
+//            printOnScreen(messages, res);
+//        }
+//    });
+//});
+//
+//app.get('/message/:id', function (req, res) {
+//    req.models.message.get(req.params.id, function (err, messages) {
+//        printOnScreen(messages, res);
+//
+//    });
+//});
 
 
 //app.get(/^\/([a-zA-Z0-9_\.~-]+)\/(.*)/, function (req, res) {
@@ -81,6 +162,4 @@ app.get('/user', function (req, res) {
 //    console.log("Not found");
 //});
 
-
-// Launch server
 app.listen(4242);
