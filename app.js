@@ -17,202 +17,64 @@ var express = require("express"),
 
 var app = express();
 
+var question = require('./routes/question'),
+    answer = require('./routes/answer'),
+    comment = require('./routes/comment'),
+    statusCode = require('./routes/status');
+
 app.use(express.bodyParser());
 
 app.use(orm.express('sqlite://storage.db', {
     define: function (db, models, next) {
-
-        models.question = db.define("question", {
-            id: Number,
-            message: String
-        });
-
-        models.answer = db.define("answer", {
-            id: Number,
-            message: String,
-            question: Number
-        });
-
-        models.comment = db.define("comment", {
-            id: Number,
-            message: String,
-            question: Number,
-            answer: Number
-        });
-
+        "use strict";
         next();
     }
 }));
 
-function printOnScreen(objects, res) {
-    res.writeHead(200, {'Content-Type': 'text/plain' });
-    if (objects) {
-        res.write(JSON.stringify(objects));
-    }
-    res.end();
-    console.log("Questions found: %s", JSON.stringify(objects));
-}
+
+/**
+ * get statements
+ */
+app.get('/question', question.allQuestions);
+app.get('/question/:id', question.questionById);
+app.get('/question/:id/answer', answer.answerOfQuestionById);
+app.get('/question/:id/comment', comment.commentsOfQuestionById);
 
 
-app.get('/question', function (req, res) {
-    req.models.question.find(function (err, questions) {
-        printOnScreen(questions, res);
-    });
-});
+app.get('/answer', answer.allAnswer);
+app.get('/answer/:id', answer.answerById);
+app.get('/answer/:id/comment', comment.commentsOfAnswerById);
 
+app.get('/comment', comment.allComments);
+app.get('/comment/:id', comment.commentById);
 
-app.get('/question/:id', function (req, res) {
-    req.models.question.get(req.params.id, function (err, questions) {
-        if (err) {
-            console.log("ERROR: " + err);
-        } else {
-            printOnScreen(questions, res);
-        }
-    });
-});
+app.get('*', statusCode.notFound);
 
+/**
+ * delete statements
+ */
+app.delete('/question/:id', question.deleteById);
+app.delete('/answer/:id', answer.deleteById);
+app.delete('/comment/:id', comment.deleteById);
 
-app.get('/question/:id/answer', function (req, res) {
-    req.models.answer.find({question: req.params.id}, function (err, answers) {
-        if (err) {
-            console.log("ERROR: " + err);
-        } else {
-            printOnScreen(answers, res);
-        }
-    });
-});
+app.delete('*', statusCode.notFound);
 
+/**
+ * post statements
+ */
+app.post('/question', question.createQuestion);
+app.post('/answer', answer.createAnswer);
+app.post('/comment', comment.createComment);
 
-app.get('/question/:id/comment', function (req, res) {
-    req.models.comment.find({question: req.params.id}, function (err, comments) {
-        if (err) {
-            console.log("ERROR: " + err);
-        } else {
-            printOnScreen(comments, res);
-        }
-    });
-});
+app.post('*', statusCode.notFound);
 
+/**
+ * put statements
+ */
+app.put('/question/:id', question.updateQuestion);
+app.put('/answer/:id', answer.updateAnswer);
+app.put('/comment/:id', comment.updateComment);
 
-app.get('/answer', function (req, res) {
-    req.models.answer.find(function (err, answer) {
-        printOnScreen(answer, res);
-    });
-});
-
-
-app.get('/answer/:id', function (req, res) {
-    req.models.answer.get(req.params.id, function (err, answer) {
-        if (err) {
-            console.log("ERROR: " + err);
-        } else {
-            printOnScreen(answer, res);
-        }
-    });
-});
-
-
-app.get('/answer/:id/comment', function (req, res) {
-    req.models.comment.find({answer: req.params.id}, function (err, comments) {
-        if (err) {
-            console.log("ERROR: " + err);
-        } else {
-            printOnScreen(comments, res);
-        }
-    });
-});
-
-
-app.get('/comment', function (req, res) {
-    req.models.comment.find(function (err, comments) {
-        if (err) {
-            console.log("ERROR: " + err);
-        } else {
-            printOnScreen(comments, res);
-        }
-    });
-});
-
-app.get('/comment/:id', function (req, res) {
-    req.models.comment.get(req.params.id, function (err, comments) {
-        printOnScreen(comments, res);
-
-    });
-});
-
-app.delete('/question/:id', function (req, res) {
-    req.models.question.find({id: req.params.id}, function (err, question) {
-        if (question) {
-            question[0].remove(function (err) {
-                console.log("ERROR: " + err);
-                console.log("REMOVED!");
-            });
-        }
-    });
-});
-
-app.delete('/answer/:id', function (req, res) {
-    req.models.answer.find({id: req.params.id}, function (err, answer) {
-        answer[0].remove(function (err) {
-            console.log("ERROR: " + err);
-        });
-    });
-});
-
-
-app.delete('/comment/:id', function (req, res) {
-    req.models.comment.find({id: req.params.id}, function (err, comment) {
-        comment[0].remove(function (err) {
-            console.log("ERROR: " + err);
-        });
-    });
-});
-
-
-app.post('/question', function (req, res) {
-    req.models.question.create([
-        {
-            id: req.body.id,
-            message: req.body.message
-        }
-    ], function (err, items) {
-        console.log("ERROR: " + err);
-        console.log("Items: " + JSON.stringify(items));
-    });
-
-    printOnScreen("WORKED!", res);
-});
-
-
-app.post('/answer', function (req, res) {
-    req.models.answer.create([
-        {
-            id: req.body.id,
-            message: req.body.message,
-            question: req.body.question
-        }
-    ], function (err, items) {
-        console.log("ERROR: " + err);
-    });
-
-    printOnScreen("WORKED!", res);
-});
-
-
-app.post('/comment', function (req, res) {
-    req.models.comment.create([
-        {
-            id: req.body.id,
-            message: req.body.message,
-            answer: req.body.answer,
-            question: req.body.question
-        }
-    ], function (err, items) {
-        console.log("ERROR: " + err);
-    });
-
-    printOnScreen("WORKED!", res);
-});
-
+app.put('*', statusCode.notFound);
 
 app.listen(4242);
