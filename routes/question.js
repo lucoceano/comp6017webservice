@@ -10,9 +10,12 @@ var app = express();
 app.use(orm.express("sqlite://storage.db", {
     define: function (db, models, next) {
         "use strict";
-        models.question = db.define("question", {
-            id: Number,
-            message: String
+
+        db.load("./models", function (err) {
+            if (err) {
+                throw err;
+            }
+            models.question = db.models.question;
         });
 
         next();
@@ -31,7 +34,7 @@ exports.createQuestion = function (req, res) {
             message: req.body.message
         }
     ], function (err) {
-        return err ? statusCode.internalError(err, res) : statusCode.created(res);
+        return err ? statusCode.internalError(res) : statusCode.created(res);
     });
 };
 
@@ -42,11 +45,13 @@ exports.allQuestions = function (req, res) {
     "use strict";
     return req.models.question.find(function (err, questions) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
         if (questions.length === 0) {
+            console.log("no Content!");
             return statusCode.noContent(res);
         }
+
         return res.send(questions);
     });
 };
@@ -57,7 +62,7 @@ exports.allQuestions = function (req, res) {
 exports.questionById = function (req, res) {
     "use strict";
     return req.models.question.get(req.params.id, function (err, questions) {
-        return err ? statusCode.notFound(err, res) : res.send(questions);
+        return err ? statusCode.notFound(res) : res.send(questions);
     });
 };
 
@@ -68,11 +73,11 @@ exports.deleteById = function (req, res) {
     "use strict";
     return req.models.question.get(req.params.id, function (err, question) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
         return question.remove(function (err) {
             if (err) {
-                return statusCode.internalError(err, res);
+                return statusCode.internalError(res);
             }
             return statusCode.ok(res);
         });
@@ -86,7 +91,7 @@ exports.updateQuestion = function (req, res) {
     "use strict";
     return req.models.question.get(req.params.id, function (err, question) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
 
         if (req.body.message) {
@@ -95,7 +100,7 @@ exports.updateQuestion = function (req, res) {
 
         question.save(function (err) {
             if (err) {
-                return statusCode.internalError(err, res);
+                return statusCode.notModified(res);
             }
             return statusCode.ok(res);
         });

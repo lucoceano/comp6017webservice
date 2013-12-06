@@ -7,15 +7,15 @@ var express = require("express"),
 
 var app = express();
 
-
 app.use(orm.express("sqlite://storage.db", {
     define: function (db, models, next) {
         "use strict";
 
-        models.answer = db.define("answer", {
-            id: Number,
-            message: String,
-            question: Number
+        db.load("./models", function (err) {
+            if (err) {
+                throw err;
+            }
+            models.answer = db.models.answer;
         });
 
         next();
@@ -34,7 +34,7 @@ exports.createAnswer = function (req, res) {
             question: req.body.question
         }
     ], function (err) {
-        return err ? statusCode.internalError(err, res) : statusCode.created(res);
+        return err ? statusCode.internalError(res) : statusCode.created(res);
     });
 };
 
@@ -45,7 +45,7 @@ exports.allAnswer = function (req, res) {
     "use strict";
     return req.models.answer.find(function (err, answers) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
         if (answers.length === 0) {
             return statusCode.noContent(res);
@@ -60,7 +60,7 @@ exports.allAnswer = function (req, res) {
 exports.answerById = function (req, res) {
     "use strict";
     return req.models.answer.get(req.params.id, function (err, answer) {
-        return err ? statusCode.notFound(err, res) : res.send(answer);
+        return err ? statusCode.notFound(res) : res.send(answer);
     });
 };
 
@@ -71,12 +71,12 @@ exports.deleteById = function (req, res) {
     "use strict";
     return req.models.answer.get(req.params.id, function (err, answer) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
 
         return answer.remove(function (err) {
             if (err) {
-                return statusCode.internalError(err, res);
+                return statusCode.internalError(res);
             }
             return statusCode.ok(res);
         });
@@ -90,11 +90,11 @@ exports.updateAnswer = function (req, res) {
     "use strict";
     return req.models.answer.get(req.params.id, function (err, answer) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
 
         if (req.body.message) {
-            answer = req.body.message;
+            answer.message = req.body.message;
         }
         if (req.body.question) {
             answer.question = req.body.question;
@@ -102,7 +102,7 @@ exports.updateAnswer = function (req, res) {
 
         answer.save(function (err) {
             if (err) {
-                return statusCode.internalError(err, res);
+                return statusCode.internalError(res);
             }
             return statusCode.ok(res);
         });
@@ -116,7 +116,7 @@ exports.answerOfQuestionById = function (req, res) {
     "use strict";
     req.models.answer.find({question: req.params.id}, function (err, answers) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
         if (answers.length === 0) {
             return statusCode.noContent(res);

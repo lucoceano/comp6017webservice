@@ -7,15 +7,15 @@ var express = require("express"),
 
 var app = express();
 
-
 app.use(orm.express("sqlite://storage.db", {
     define: function (db, models, next) {
         "use strict";
-        models.comment = db.define("comment", {
-            id: Number,
-            message: String,
-            question: Number,
-            answer: Number
+
+        db.load("./models", function (err) {
+            if (err) {
+                throw err;
+            }
+            models.comment = db.models.comment;
         });
 
         next();
@@ -36,7 +36,7 @@ exports.createComment = function (req, res) {
             answer: req.body.answer
         }
     ], function (err) {
-        return err ? statusCode.internalError(err, res) : statusCode.created(res);
+        return err ? statusCode.internalError(res) : statusCode.created(res);
     });
 };
 
@@ -47,7 +47,7 @@ exports.allComments = function (req, res) {
     "use strict";
     return req.models.comment.find(function (err, comments) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
         if (comments.length === 0) {
             return statusCode.noContent(res);
@@ -62,21 +62,23 @@ exports.allComments = function (req, res) {
 exports.commentById = function (req, res) {
     "use strict";
     return req.models.comment.get(req.params.id, function (err, comment) {
-        return err ? statusCode.notFound(err, res) : res.send(comment);
+        return err ? statusCode.notFound(res) : res.send(comment);
     });
 };
 
-//delete a comment by id
+/**
+ * delete a comment by id
+ */
 exports.deleteById = function (req, res) {
     "use strict";
     return req.models.comment.get(req.params.id, function (err, comment) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
 
         return comment.remove(function (err) {
             if (err) {
-                return statusCode.internalError(err, res);
+                return statusCode.internalError(res);
             }
             return statusCode.ok(res);
         });
@@ -90,8 +92,9 @@ exports.updateComment = function (req, res) {
     "use strict";
     return req.models.comment.get(req.params.id, function (err, comment) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
+
         if (req.body.message) {
             comment.message = req.body.message;
         }
@@ -104,7 +107,7 @@ exports.updateComment = function (req, res) {
 
         comment.save(function (err) {
             if (err) {
-                return statusCode.internalError(err, res);
+                return statusCode.notModified(res);
             }
             return statusCode.ok(res);
         });
@@ -119,7 +122,7 @@ exports.commentsOfQuestionById = function (req, res) {
     "use strict";
     req.models.comment.find({question: req.params.id}, function (err, comments) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
         if (comments.length === 0) {
             return statusCode.noContent(res);
@@ -135,7 +138,7 @@ exports.commentsOfAnswerById = function (req, res) {
     "use strict";
     req.models.comment.find({answer: req.params.id}, function (err, comments) {
         if (err) {
-            return statusCode.notFound(err, res);
+            return statusCode.notFound(res);
         }
         if (comments.length === 0) {
             return statusCode.noContent(res);

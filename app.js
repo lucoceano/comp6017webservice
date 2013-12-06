@@ -12,7 +12,6 @@
 
 
 var express = require("express"),
-    path = require("path"),
     orm = require('orm');
 
 var app = express();
