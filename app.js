@@ -47,7 +47,10 @@ app.get('/answer/:id/comment', comment.commentsOfAnswerById);
 app.get('/comment', comment.allComments);
 app.get('/comment/:id', comment.commentById);
 
-app.get('*', statusCode.notFound);
+app.get('*', function (req, res) {
+    "use strict";
+    statusCode.notFound(res);
+});
 
 /**
  * delete statements
@@ -56,7 +59,10 @@ app.delete('/question/:id', question.deleteById);
 app.delete('/answer/:id', answer.deleteById);
 app.delete('/comment/:id', comment.deleteById);
 
-app.delete('*', statusCode.notFound);
+app.delete('*', function (req, res) {
+    "use strict";
+    statusCode.notFound(res);
+});
 
 /**
  * post statements
@@ -65,7 +71,10 @@ app.post('/question', question.createQuestion);
 app.post('/answer', answer.createAnswer);
 app.post('/comment', comment.createComment);
 
-app.post('*', statusCode.notFound);
+app.post('*', function (req, res) {
+    "use strict";
+    statusCode.notFound(res);
+});
 
 /**
  * put statements
@@ -74,6 +83,9 @@ app.put('/question/:id', question.updateQuestion);
 app.put('/answer/:id', answer.updateAnswer);
 app.put('/comment/:id', comment.updateComment);
 
-app.put('*', statusCode.notFound);
+app.put('*', function (req, res) {
+    "use strict";
+    statusCode.notFound(res);
+});
 
 app.listen(4242);

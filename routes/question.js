@@ -48,7 +48,6 @@ exports.allQuestions = function (req, res) {
             return statusCode.notFound(res);
         }
         if (questions.length === 0) {
-            console.log("no Content!");
             return statusCode.noContent(res);
         }
 

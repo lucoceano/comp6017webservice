@@ -1,0 +1,15 @@
+::::/bin/bash
+# send login data with POST request
+curl --request POST 'http://www.somedomain.com/login/' \
+--data 'username=myusername&password=mypassword'
+
+# send search data to with get request
+curl --request GET 'http://www.youtube.com/results?search_query=my_keyword'
+
+# send PUT request with data
+curl --request PUT 'http://www.somedomain.com/rest-api/user/12345/'\
+--data 'email=myemail@gmail.com'
+
+# same thing but this one get data from a file named data.txt
+curl --request PUT 'http://www.somedomain.com/rest-api/user/12345/'\
+--data @data.txt
